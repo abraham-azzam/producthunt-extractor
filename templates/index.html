@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProductHunt Extractor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin-top: 20px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        .info {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .copy-btn {
+            margin-left: 10px;
+            background-color: #28a745;
+        }
+        .copy-btn:hover {
+            background-color: #218838;
+        }
+        input[type="url"] {
+            width: 400px;
+            height: 40px;
+            font-size: 16px;
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>    
+</head>
+<body>
+    <div class="container">
+        <h1>ProductHunt Extractor V.01 by <a href="https://wa.me/+201024781836">Ibrahim</a></h1>
+        <label for="profile-url">Enter Product Hunt Profile URL:</label>
+        <input type="url" id="profile-url" placeholder="Enter the URL" required>
+        <button onclick="generateMessage()">Generate</button>        
+        <div class="info" id="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        async function generateMessage() {
+            const profileUrl = document.getElementById("profile-url").value;
+            const resultDiv = document.getElementById("result");
+            if (!profileUrl) {
+                alert("Please enter a valid Product Hunt profile URL!");
+                return;
+            }
+
+            try {
+                const response = await fetch("/process", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ profile_url: profileUrl })
+                });
+                if (!response.ok) {
+                    resultDiv.style.display = "block";
+                    resultDiv.innerHTML = `<strong>Error:</strong> Failed to fetch data.`;
+                    return;
+                }
+                const data = await response.json();
+
+                if (data.error) {
+                    resultDiv.style.display = "block";
+                    resultDiv.innerHTML = `<strong>Error:</strong> ${data.error}`;
+                } else {
+                    const { name, followers, linkedin_url, producthunt_url } = data.user_data;
+                    const message = data.message;
+
+                    resultDiv.style.display = "block";
+                    resultDiv.innerHTML = `
+                        <h2>Extracted Data:</h2>
+                        <p><strong>Name:</strong> <span id="name">${name}</span>
+                            <button class="copy-btn" onclick="copyToClipboard('name')">Copy</button>
+                        </p>
+                        <p><strong>Followers:</strong> <span id="followers">${followers}</span>
+                            <button class="copy-btn" onclick="copyToClipboard('followers')">Copy</button>
+                        </p>
+                        <p><strong>LinkedIn:</strong> <a href="${linkedin_url}" target="_blank" id="linkedin_url">${linkedin_url}</a>
+                            <button class="copy-btn" onclick="copyToClipboard('linkedin_url')">Copy</button>
+                        </p>
+                        <p><strong>Product Hunt URL:</strong> <a href="${producthunt_url}" target="_blank" id="producthunt_url">${producthunt_url}</a>
+                            <button class="copy-btn" onclick="copyToClipboard('producthunt_url')">Copy</button>
+                        </p>
+                        <h2>Generated Message:</h2>
+                        <textarea id="message" readonly>${message}</textarea>
+                        <button class="copy-btn" onclick="copyToClipboard('message')">Copy Message</button>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.style.display = "block";
+                resultDiv.innerHTML = `<strong>Error:</strong> Something went wrong.`;
+            }
+        }
+
+        function copyToClipboard(elementId) {
+            const textToCopy = document.getElementById(elementId).innerText || document.getElementById(elementId).value;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                alert("Copied to clipboard!");
+            }).catch((error) => {
+                alert("Failed to copy: " + error);
+            });
+        }
+    </script>
+</body>
+</html>
